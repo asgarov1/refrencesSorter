@@ -21,7 +21,6 @@ avoid manual work of resorting citations myself - this program does it for me.
 The updated word document will be placed in the same folder with modified name
 
 ### Considerations
-* Careful! *
  - Program expects that there is a Heading with value `References` - without it program won`t work properly
  - Program expects that References are the last thing in the document and will delete everything after `References` heading
  during the process of sorting
