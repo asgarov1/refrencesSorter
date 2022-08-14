@@ -12,12 +12,17 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.asgarov.references_sorter.constants.Constants.REFERENCE_WORD_REGEX;
+import static com.asgarov.references_sorter.util.XWPFUtil.addNewLine;
+import static com.asgarov.references_sorter.util.XWPFUtil.addParagraph;
 import static java.util.stream.Collectors.toList;
 
 public class MicrosoftWordSorter {
@@ -37,21 +42,22 @@ public class MicrosoftWordSorter {
             deleteUnusedReferences(document);
 
             List<XWPFParagraph> referenceParagraphs = getReferenceParagraphs(document).stream().distinct().collect(toList());
-            List<Integer> referenceParagraphsPositions = referenceParagraphs.stream().map(document.getDocument()::getPosOfParagraph).collect(toList());
 
             List<XWPFParagraph> sortedReferenceParagraphs = referenceParagraphs.stream().sorted(MicrosoftWordSorter::sort).collect(toList());
 
+            int referencesIndex = getParagraphIndexThatContains(document, REFERENCES);
+            int endOfOldParagraphs = document.getDocument().getParagraphs().size() - 1;
 
+            //add new paragraphs
+            sortedReferenceParagraphs.forEach(p -> {
+                addParagraph(document, p);
+                addNewLine(document);
+            });
 
-            System.out.println(document.getDocument().getParagraphs().size());
-
-            for (int i = 0; i < sortedReferenceParagraphs.size(); i++) {
-                XWPFParagraph paragraph = sortedReferenceParagraphs.get(i);
-                Integer indexToReplace = referenceParagraphsPositions.get(i);
-                document.getDocument().setParagraph(paragraph, indexToReplace);
+            //delete old ones
+            for (int i = endOfOldParagraphs; i > referencesIndex; i--) {
+                document.getDocument().removeBodyElement(i);
             }
-
-            System.out.println(document.getDocument().getParagraphs().size());
 
             doc.write(output);
         } catch (IOException e) {
@@ -156,6 +162,7 @@ public class MicrosoftWordSorter {
                 String runText = run.getText(0);
                 if (runText != null && runText.contains("[") && !runText.contains(PROCESSING_PREFIX)) {
                     xwpfParagraphs.add(paragraphs.get(i));
+                    break;
                 }
             }
         }
@@ -186,17 +193,5 @@ public class MicrosoftWordSorter {
                 }
             }
         }
-    }
-
-    private static Optional<XWPFParagraph> getContainingParagraph(XWPFWordExtractor document, String matchedReference) {
-        for (XWPFParagraph xwpfParagraph : document.getDocument().getParagraphs()) {
-            for (XWPFRun xwpfRun : xwpfParagraph.getRuns()) {
-                String docText = xwpfRun.getText(0);
-                if (docText != null && docText.contains(matchedReference)) {
-                    return Optional.of(xwpfParagraph);
-                }
-            }
-        }
-        return Optional.empty();
     }
 }
