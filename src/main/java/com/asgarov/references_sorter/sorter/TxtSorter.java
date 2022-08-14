@@ -17,7 +17,11 @@ import static com.asgarov.references_sorter.util.TextUtil.getMainText;
 import static com.asgarov.references_sorter.util.TextUtil.getReferences;
 import static java.lang.System.lineSeparator;
 
-public class Sorter {
+/**
+ * This class can only sort references in .txt files
+ *  - use {@link MicrosoftWordSorter} to sort references in Microsoft Word documents
+ */
+public class TxtSorter {
 
     public static void sort(String pathToFile) {
         String fileText = FileUtil.readFile(pathToFile);
@@ -36,7 +40,7 @@ public class Sorter {
 
         String sortedReferences = matcher.results()
                 .map(MatchResult::group)
-                .sorted(Comparator.comparingInt(Sorter::getReferenceNum))
+                .sorted(Comparator.comparingInt(TxtSorter::getReferenceNum))
                 .collect(Collectors.joining(lineSeparator() + lineSeparator()));
 
         document.setReferences(sortedReferences);

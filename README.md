@@ -6,7 +6,7 @@ find myself working on the assignment in non sequential order, resulting in non 
 avoid manual work of resorting citations myself - this program does it for me.
 
 ## Usage
- - Place your word document in one of the Project folders, for example `src/main/resources/your_document.docx`
+ - Place your word document in one of the project's folders, for example `src/main/resources/your_document.docx`
  - Run it from [Runner](src/main/java/com/asgarov/references_sorter/Runner.java) class, supplying the above mentioned path
  as the only parameter:
 
@@ -18,9 +18,9 @@ avoid manual work of resorting citations myself - this program does it for me.
  }
  ```
 
-The updated word document will be placed in the same folder with modified name
+The updated word document will be placed in the same folder with modified name, in this case `src/main/resources/your_document_updated.docx`
 
 ### Considerations
  - Program expects that there is a Heading with value `References` - without it program won`t work properly
- - Program expects that References are the last thing in the document and will delete everything after `References` heading
- during the process of sorting
+ - Program expects that the references are the last thing in the document and will overwrite everything after `References` heading
+with the new list of sorted references.
