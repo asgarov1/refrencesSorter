@@ -12,19 +12,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
-import static com.asgarov.references_sorter.constants.Constants.REFERENCE_INCLUDING_PROCESSING_PREFIX_REGEX;
 import static com.asgarov.references_sorter.constants.Constants.REFERENCE_WORD_REGEX;
 import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toMap;
 
 public class MicrosoftWordSorter {
 
@@ -43,26 +37,21 @@ public class MicrosoftWordSorter {
             deleteUnusedReferences(document);
 
             List<XWPFParagraph> referenceParagraphs = getReferenceParagraphs(document).stream().distinct().collect(toList());
-            Map<XWPFParagraph, Integer> sortedReferencesWithReferenceNumbers = referenceParagraphs
-                    .stream()
-                    .sorted(MicrosoftWordSorter::sort)
-                    .collect(toMap(
-                            p -> p,
-                            MicrosoftWordSorter::getReferenceNumber
-                    ));
+            List<Integer> referenceParagraphsPositions = referenceParagraphs.stream().map(document.getDocument()::getPosOfParagraph).collect(toList());
 
-            Map<XWPFParagraph, Integer> referenceParagraphsWithPosition = referenceParagraphs.stream()
-                    .collect(Collectors.toMap(
-                            p -> p,
-                            document.getDocument()::getPosOfParagraph
-                    ));
+            List<XWPFParagraph> sortedReferenceParagraphs = referenceParagraphs.stream().sorted(MicrosoftWordSorter::sort).collect(toList());
 
-            sortedReferencesWithReferenceNumbers
-                    .forEach((key, value) -> {
-                        XWPFParagraph xwpfParagraph = referenceParagraphs.get(value - 1);
-                        Integer indexToReplace = referenceParagraphsWithPosition.get(xwpfParagraph);
-                        document.getDocument().setParagraph(key, indexToReplace);
-                    });
+
+
+            System.out.println(document.getDocument().getParagraphs().size());
+
+            for (int i = 0; i < sortedReferenceParagraphs.size(); i++) {
+                XWPFParagraph paragraph = sortedReferenceParagraphs.get(i);
+                Integer indexToReplace = referenceParagraphsPositions.get(i);
+                document.getDocument().setParagraph(paragraph, indexToReplace);
+            }
+
+            System.out.println(document.getDocument().getParagraphs().size());
 
             doc.write(output);
         } catch (IOException e) {
@@ -104,13 +93,21 @@ public class MicrosoftWordSorter {
     }
 
     private static void deleteUnusedReferences(XWPFWordExtractor document) {
-        final Pattern pattern = Pattern.compile(REFERENCE_INCLUDING_PROCESSING_PREFIX_REGEX, Pattern.MULTILINE);
-        Matcher matcher = pattern.matcher(document.getText());
+        List<XWPFParagraph> containingParagraphs = document.getDocument().getParagraphs()
+                .stream()
+                .filter(p -> contains(p, PROCESSING_PREFIX))
+                .collect(toList());
 
-        while (matcher.find()) {
-            String matchedReference = matcher.group(0);
-            replaceInDocument(document, matchedReference, "");
-        }
+        containingParagraphs.stream()
+                .map(document.getDocument()::getPosOfParagraph)
+                .forEach(document.getDocument()::removeBodyElement);
+    }
+
+    private static boolean contains(XWPFParagraph paragraph, String prefix) {
+        return paragraph.getRuns().stream()
+                .map(run -> run.getText(0))
+                .filter(Objects::nonNull)
+                .anyMatch(text -> text.contains(prefix));
     }
 
     private static void replaceReferencesBackToNumbers(XWPFWordExtractor document) {
@@ -189,5 +186,17 @@ public class MicrosoftWordSorter {
                 }
             }
         }
+    }
+
+    private static Optional<XWPFParagraph> getContainingParagraph(XWPFWordExtractor document, String matchedReference) {
+        for (XWPFParagraph xwpfParagraph : document.getDocument().getParagraphs()) {
+            for (XWPFRun xwpfRun : xwpfParagraph.getRuns()) {
+                String docText = xwpfRun.getText(0);
+                if (docText != null && docText.contains(matchedReference)) {
+                    return Optional.of(xwpfParagraph);
+                }
+            }
+        }
+        return Optional.empty();
     }
 }
