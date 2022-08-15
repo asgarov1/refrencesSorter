@@ -8,6 +8,10 @@ public class TextUtil {
     }
 
     public static String getReferences(String fileText) {
-        return fileText.split(REFERENCES_REGEX)[1];
+        String[] fileSplit = fileText.split(REFERENCES_REGEX);
+        if (fileSplit.length < 2) {
+            throw new IllegalStateException("Can't find references: File doesn't contain a heading with value \"References\"");
+        }
+        return fileSplit[1];
     }
 }

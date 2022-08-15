@@ -23,6 +23,7 @@ The updated word document will be placed in the same folder with modified name, 
 ### Considerations
  - You have to close the document before running the program so that java can access it - otherwise you'll get
 `java.io.FileNotFoundException: [provided_path_to_document] (The process cannot access the file because it is being used by another process)`
- - Program expects that there is a heading with value `References` - without it program won`t work properly
+ - Program expects that there is a heading with value `References` - otherwise you will get
+`java.lang.IllegalStateException: Can't find references: File doesn't contain a heading with value "References"!`
  - Program expects that the references are the last thing in the document and will overwrite everything after `References` heading
 with the new list of sorted references.
