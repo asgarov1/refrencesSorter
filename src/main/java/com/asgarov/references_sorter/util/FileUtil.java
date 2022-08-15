@@ -1,34 +1,32 @@
 package com.asgarov.references_sorter.util;
 
 import com.asgarov.references_sorter.domain.DocumentWrapper;
-import org.apache.poi.xwpf.extractor.XWPFWordExtractor;
-import org.apache.poi.xwpf.usermodel.XWPFDocument;
+import lombok.SneakyThrows;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.lang.System.lineSeparator;
 
 public class FileUtil {
+
+    @SneakyThrows
     public static String readFile(String fileName) {
-        try {
-            return Files.lines(Paths.get(fileName)).collect(Collectors.joining(lineSeparator()));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        try(Stream<String> lines = Files.lines(Paths.get(fileName))) {
+            return lines.collect(Collectors.joining(lineSeparator()));
         }
     }
 
+    @SneakyThrows
     public static void writeToFile(String pathToFile, DocumentWrapper document) {
         try (var writer = new BufferedWriter(new FileWriter(pathToFile))) {
             writer.write(document.getBodyText());
             writer.write("References" + lineSeparator());
             writer.write(document.getReferences());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         }
     }
 
