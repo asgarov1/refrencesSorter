@@ -19,7 +19,7 @@ import static java.lang.System.lineSeparator;
 
 /**
  * This class can only sort references in .txt files
- *  - use {@link MicrosoftWordSorter} to sort references in Microsoft Word documents
+ *  - use {@link MicrosoftWordReferencesSorter} to sort references in Microsoft Word documents
  */
 public class TxtSorter {
 

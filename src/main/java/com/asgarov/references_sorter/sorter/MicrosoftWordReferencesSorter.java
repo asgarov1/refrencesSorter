@@ -27,19 +27,20 @@ import static com.asgarov.references_sorter.util.XWPFUtil.addNewLine;
 import static com.asgarov.references_sorter.util.XWPFUtil.addParagraph;
 import static java.util.stream.Collectors.toList;
 
-public class MicrosoftWordSorter {
+public class MicrosoftWordReferencesSorter {
 
 
     /**
      * Main logic of the program:
-     *  - reads the file
-     *  - resorts references
-     *  - write to a new file in the same folder with original name postfixed with {@link Constants#UPDATED_POSTFIX}
+     * - reads the file
+     * - resorts references
+     * - write to a new file in the same folder with original name postfixed with {@link Constants#UPDATED_POSTFIX}
+     *
      * @param pathToFile - original file to read
      */
-    public static void sort(String pathToFile) {
-        try (XWPFDocument doc = new XWPFDocument(Files.newInputStream(Paths.get(pathToFile)));
-             var document = new XWPFWordExtractor(doc);
+    public static void sortReferences(String pathToFile) {
+        try (XWPFDocument xwpfDocument = new XWPFDocument(Files.newInputStream(Paths.get(pathToFile)));
+             var document = new XWPFWordExtractor(xwpfDocument);
              var output = new FileOutputStream(FileUtil.updateFileName(pathToFile, UPDATED_POSTFIX))) {
 
             String references = getReferences(document.getText());
@@ -47,23 +48,15 @@ public class MicrosoftWordSorter {
             replaceReferencesBackToNumbers(document);
             deleteUnusedReferences(document);
 
-            List<XWPFParagraph> referenceParagraphs = getReferenceParagraphs(document)
-                    .stream()
-                    .distinct()
-                    .collect(toList());
-            List<XWPFParagraph> sortedReferenceParagraphs = referenceParagraphs
-                    .stream()
-                    .sorted(ReferenceParagraphComparator::compare)
-                    .collect(toList());
+            // we have to add new references BEFORE deleting old ones due to the fact
+            // that new references are created by copying data from old ones -> and the old ones throw exception after deletion
+            int newReferencesStartIndex = addNewSortedReferences(document);
 
             int referencesIndex = getParagraphIndexThatContains(document, REFERENCES);
-            int endOfOldParagraphs = document.getDocument().getParagraphs().size() - 1;
-
-            addNewSortedReferences(document, sortedReferenceParagraphs);
-            deleteOldReferences(document, referencesIndex, endOfOldParagraphs);
+            deleteOldReferences(document, referencesIndex, newReferencesStartIndex - 1);
 
             //write to file
-            doc.write(output);
+            xwpfDocument.write(output);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -75,11 +68,18 @@ public class MicrosoftWordSorter {
         }
     }
 
-    private static void addNewSortedReferences(XWPFWordExtractor document, List<XWPFParagraph> sortedReferenceParagraphs) {
-        sortedReferenceParagraphs.forEach(p -> {
-            addParagraph(document, p);
-            addNewLine(document);
-        });
+    private static int addNewSortedReferences(XWPFWordExtractor document) {
+        int newReferencesIndex = document.getDocument().getParagraphs().size();
+
+        getReferenceParagraphs(document)
+                .stream()
+                .sorted(ReferenceParagraphComparator::compare)
+                .forEach(paragraph -> {
+                    addParagraph(document, paragraph);
+                    addNewLine(document);
+                });
+
+        return newReferencesIndex;
     }
 
     private static void deleteUnusedReferences(XWPFWordExtractor document) {
@@ -104,6 +104,7 @@ public class MicrosoftWordSorter {
      * By first changing reference numbers to something else and then enumerating back in turn
      * we naturally sort them as we enumarate them one after another
      * The references will be in correct order in the whole document and only references section still needs to be sorted
+     *
      * @param document to update references in
      */
     private static void replaceReferencesBackToNumbers(XWPFWordExtractor document) {
@@ -136,10 +137,7 @@ public class MicrosoftWordSorter {
 
         int endIndex = line.indexOf("]");
         String referenceNumber = line.substring(0, endIndex + 1);
-        String updatedReferenceNumber = referenceNumber.replace(
-                "[",
-                "[" + prefix
-        );
+        String updatedReferenceNumber = referenceNumber.replace("[", "[" + prefix);
 
         replaceInDocument(document, referenceNumber, updatedReferenceNumber);
     }

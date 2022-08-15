@@ -1,9 +1,9 @@
 package com.asgarov.references_sorter;
 
-import com.asgarov.references_sorter.sorter.MicrosoftWordSorter;
+import com.asgarov.references_sorter.sorter.MicrosoftWordReferencesSorter;
 
 public class Runner {
     public static void main(String[] args) {
-        MicrosoftWordSorter.sort("src/main/resources/assignment.docx");
+        MicrosoftWordReferencesSorter.sortReferences("src/main/resources/assignment.docx");
     }
 }
