@@ -56,14 +56,13 @@ public class MicrosoftWordReferencesSorter {
             replaceReferencesBackToNumbers(document);
             deleteUnusedReferences(document);
 
-            // we have to add new references BEFORE deleting old ones due to the fact
-            // that new references are created by copying data from old ones -> and the old ones throw exception after deletion
+            // we have to add new references BEFORE deleting old ones due to the fact that
+            // new references are created by copying data from old ones -> and the old ones throw exception after deletion
             int newReferencesStartIndex = addNewSortedReferences(document);
 
             int referencesIndex = getParagraphIndexThatContains(document, REFERENCES);
             deleteOldReferences(document, referencesIndex, newReferencesStartIndex - 1);
 
-            //write to file
             xwpfDocument.write(output);
             logger.info("Saved file under " + outputFileName);
         }
@@ -90,7 +89,6 @@ public class MicrosoftWordReferencesSorter {
                 });
 
         logger.info("Added " + paragraphsAdded.get() + " sorted references");
-
         return newReferencesIndex;
     }
 
@@ -187,7 +185,7 @@ public class MicrosoftWordReferencesSorter {
                 }
             }
         }
-        return -1;
+        throw new IllegalArgumentException("No paragraph containing the word \"" + word + "\" was found!");
     }
 
     private static void replaceInDocument(XWPFWordExtractor document, String toReplace, String replacement) {
