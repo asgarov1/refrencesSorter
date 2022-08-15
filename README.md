@@ -21,6 +21,8 @@ avoid manual work of resorting citations myself - this program does it for me.
 The updated word document will be placed in the same folder with modified name, in this case `src/main/resources/your_document_updated.docx`
 
 ### Considerations
- - Program expects that there is a Heading with value `References` - without it program won`t work properly
+ - You have to close the document before running the program so that java can access it - otherwise you'll get
+`java.io.FileNotFoundException: [provided_path_to_document] (The process cannot access the file because it is being used by another process)`
+ - Program expects that there is a heading with value `References` - without it program won`t work properly
  - Program expects that the references are the last thing in the document and will overwrite everything after `References` heading
 with the new list of sorted references.
